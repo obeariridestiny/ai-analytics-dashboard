@@ -16,13 +16,8 @@ const httpServer = createServer(app);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://ai-analytics-dashboard.vercel.app",
-    "https://ai-analytics-dashboard-*.vercel.app"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  origin: "*", // Allow all origins
+  credentials: true
 }));
 app.use(express.json());
 
