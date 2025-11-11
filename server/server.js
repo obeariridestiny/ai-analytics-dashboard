@@ -46,41 +46,74 @@ const connectDB = async () => {
 
 connectDB();
 
-// Routes
+// ===== ROUTES =====
+
+// Root route - to fix "Cannot GET /" error
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 AI Analytics Backend Server is running!',
+    version: '1.0.0',
+    status: 'active',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      users: '/api/users',
+      analytics: '/api/analytics',
+      auth: {
+        register: '/api/auth/register',
+        login: '/api/auth/login'
+      }
+    },
+    documentation: 'See /api/health for server status'
+  });
+});
+
+// Health check route
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'AI Analytics Server is running!',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Mock data for demo
+// Users route
 app.get('/api/users', (req, res) => {
   res.json({
     users: [
       { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
       { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' },
-      { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'user' }
-    ]
+      { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'user' },
+      { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'admin' }
+    ],
+    total: 4,
+    timestamp: new Date().toISOString()
   });
 });
 
+// Analytics route
 app.get('/api/analytics', (req, res) => {
   res.json({
     revenue: 45231,
     users: 1234,
     growth: 12.5,
-    chartData: [65, 78, 90, 81, 56, 55, 40]
+    activeUsers: 892,
+    sessions: 2457,
+    conversion: 24.5,
+    chartData: [65, 78, 90, 81, 56, 55, 40],
+    timestamp: new Date().toISOString()
   });
 });
 
-// Auth routes (mock for now)
+// Auth routes
 app.post('/api/auth/register', (req, res) => {
   res.json({ 
     message: 'User registered successfully',
-    user: { id: 1, name: 'Demo User', email: 'demo@example.com' }
+    user: { id: 1, name: 'Demo User', email: 'demo@example.com', role: 'user' },
+    token: 'demo-jwt-token',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -88,7 +121,24 @@ app.post('/api/auth/login', (req, res) => {
   res.json({ 
     message: 'Login successful',
     user: { id: 1, name: 'Demo User', email: 'demo@example.com', role: 'admin' },
-    token: 'demo-jwt-token'
+    token: 'demo-jwt-token',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler for undefined routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `The route ${req.originalUrl} does not exist`,
+    availableEndpoints: [
+      'GET /',
+      'GET /api/health',
+      'GET /api/users', 
+      'GET /api/analytics',
+      'POST /api/auth/register',
+      'POST /api/auth/login'
+    ]
   });
 });
 
@@ -120,5 +170,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📍 Root: http://localhost:${PORT}/`);
+  console.log(`📍 Health: http://localhost:${PORT}/api/health`);
+  console.log(`📍 Users: http://localhost:${PORT}/api/users`);
 });
