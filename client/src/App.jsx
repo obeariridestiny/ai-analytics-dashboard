@@ -12,17 +12,27 @@ function App() {
   const [authMode, setAuthMode] = useState('login');
   const [authData, setAuthData] = useState({ name: '', email: '', password: '' });
 
-  const API_URL = import.meta.env.NEXT_PUBLIC_API_URL || 'https://ai-analytics-backend-z5so.onrender.com';
+  // Debug the API URL
+  console.log('🔧 Frontend Debug Info:');
+  console.log('All env vars:', import.meta.env);
+  
+  // Hardcode the API URL for now
+  const API_URL = 'https://ai-analytics-backend-z5so.onrender.com';
+  console.log('Using API_URL:', API_URL);
 
   // Auth functions
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
+    console.log('🔄 Attempting login with:', authData.email);
+    
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: authData.email,
         password: authData.password
       });
+      
+      console.log('✅ Login response:', response.data);
       
       if (response.data.success) {
         setUser(response.data.user);
@@ -32,6 +42,7 @@ function App() {
         setAuthData({ name: '', email: '', password: '' });
       }
     } catch (error) {
+      console.error('❌ Login failed:', error);
       alert(error.response?.data?.message || 'Login failed');
     }
     setLoading(false);
@@ -40,8 +51,11 @@ function App() {
   const handleRegister = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
+    console.log('🔄 Attempting registration with:', authData.email);
+    
     try {
       const response = await axios.post(`${API_URL}/api/auth/register`, authData);
+      console.log('✅ Registration response:', response.data);
       
       if (response.data.success) {
         alert('Registration successful! Please login.');
@@ -49,6 +63,7 @@ function App() {
         setAuthData({ ...authData, name: '' });
       }
     } catch (error) {
+      console.error('❌ Registration failed:', error);
       alert(error.response?.data?.message || 'Registration failed');
     }
     setLoading(false);
@@ -60,16 +75,30 @@ function App() {
     localStorage.removeItem('user');
   };
 
-  // Existing data functions
+  // Data functions
   const checkHealth = async () => {
     setLoading(true);
+    console.log('🔄 Checking health at:', `${API_URL}/api/health`);
+    
     try {
-      const response = await axios.get(`${API_URL}/api/health`);
+      const response = await axios.get(`${API_URL}/api/health`, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('✅ Health check success:', response.data);
       setHealth(response.data);
     } catch (error) {
+      console.error('❌ Health check failed:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       setHealth({ 
         status: 'ERROR', 
-        message: 'Server not reachable'
+        message: `Connection failed: ${error.message}`
       });
     }
     setLoading(false);
@@ -80,6 +109,7 @@ function App() {
       const response = await axios.get(`${API_URL}/api/users`);
       setUsers(response.data.users);
     } catch (error) {
+      console.error('Failed to fetch users:', error);
       setUsers([
         { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' }
@@ -92,6 +122,7 @@ function App() {
       const response = await axios.get(`${API_URL}/api/analytics`);
       setAnalytics(response.data);
     } catch (error) {
+      console.error('Failed to fetch analytics:', error);
       setAnalytics({
         revenue: 45231,
         users: 1234,
@@ -155,14 +186,18 @@ function App() {
               type="text"
               placeholder="Full Name"
               value={authData.name}
-              onChange={(e) => setAuthData({...authData, name: e.target.value})}
+              onChange={(e) => {
+                setAuthData(prev => ({...prev, name: e.target.value}));
+              }}
+              onBlur={(e) => e.target.focus()}
               style={{
                 width: '100%',
                 padding: '12px',
                 marginBottom: '15px',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
-                fontSize: '16px'
+                fontSize: '16px',
+                WebkitAppearance: 'none'
               }}
               required
             />
@@ -172,14 +207,18 @@ function App() {
             type="email"
             placeholder="Email Address"
             value={authData.email}
-            onChange={(e) => setAuthData({...authData, email: e.target.value})}
+            onChange={(e) => {
+              setAuthData(prev => ({...prev, email: e.target.value}));
+            }}
+            onBlur={(e) => e.target.focus()}
             style={{
               width: '100%',
               padding: '12px',
               marginBottom: '15px',
               border: '1px solid #ddd',
               borderRadius: '8px',
-              fontSize: '16px'
+              fontSize: '16px',
+              WebkitAppearance: 'none'
             }}
             required
           />
@@ -188,14 +227,18 @@ function App() {
             type="password"
             placeholder="Password"
             value={authData.password}
-            onChange={(e) => setAuthData({...authData, password: e.target.value})}
+            onChange={(e) => {
+              setAuthData(prev => ({...prev, password: e.target.value}));
+            }}
+            onBlur={(e) => e.target.focus()}
             style={{
               width: '100%',
               padding: '12px',
               marginBottom: '20px',
               border: '1px solid #ddd',
               borderRadius: '8px',
-              fontSize: '16px'
+              fontSize: '16px',
+              WebkitAppearance: 'none'
             }}
             required
           />
@@ -254,24 +297,8 @@ function App() {
     </div>
   );
 
-  // Loading Component
-  const LoadingSpinner = () => (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px'
-    }}>
-      <div style={{
-        width: '40px',
-        height: '40px',
-        border: '4px solid #f3f3f3',
-        borderTop: '4px solid #3b82f6',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }}></div>
-    </div>
-  );
+  // ... (rest of the component remains the same as before)
+  // Loading Component, Header, Main Content, etc.
 
   return (
     <div style={{ 
@@ -402,7 +429,24 @@ function App() {
 
         {/* Main Content */}
         <main style={{ padding: '20px' }}>
-          {loading && <LoadingSpinner />}
+          {/* Loading Spinner */}
+          {loading && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '4px solid #f3f3f3',
+                borderTop: '4px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }}></div>
+            </div>
+          )}
 
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && !loading && (
