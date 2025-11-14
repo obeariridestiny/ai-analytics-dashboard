@@ -16,38 +16,16 @@ const httpServer = createServer(app);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: function(origin, callback) {
-// Middleware
-app.use(helmet());
-
-// SIMPLE CORS - Allow everything temporarily
-app.use(cors({
-  origin: "*",
+  origin: [
+    "http://localhost:3000",
+    "https://ai-analytics-dashboard.vercel.app",
+    "https://ai-analytics-dashboard-*.vercel.app",
+    "https://*.vercel.app"
+  ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "*"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
-
-// Explicitly handle preflight requests
-app.options('*', cors());
-
-    // Allow any Vercel preview deployments
-    if (origin.includes('vercel.app') || origin.includes('onrender.com')) {
-      console.log('✅ Allowed origin:', origin);
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('🔒 CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
-}));
+app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
