@@ -1,18 +1,18 @@
-# 🚀 AI Analytics Dashboard
+# AI Analytics Dashboard by Uwagbanebi Obeariri Destiny
 
 A production-ready full-stack analytics platform with real-time data visualization, user management, and cloud deployment.
 
-## ✨ Features
+# Features
 
-- **📊 Real-time Analytics** - Live data visualization and metrics
-- **👥 User Management** - Complete authentication & authorization
-- **🔐 Secure Authentication** - JWT-based security system
-- **📱 Responsive Design** - Works perfectly on all devices
-- **☁️ Cloud Deployment** - Production-ready on Render & Vercel
-- **🎨 Modern UI/UX** - Beautiful gradient designs and animations
-- **🤖 AI-Powered Insights** - Predictions and anomaly detection
+- ** Real-time Analytics** - Live data visualization and metrics
+- ** User Management** - Complete authentication & authorization
+- ** Secure Authentication** - JWT-based security system
+- ** Responsive Design** - Works perfectly on all devices
+- ** Cloud Deployment** - Production-ready on Render & Vercel
+- ** Modern UI/UX** - Beautiful gradient designs and animations
+- ** AI-Powered Insights** - Predictions and anomaly detection
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 - **React** - Modern UI framework
@@ -31,7 +31,7 @@ A production-ready full-stack analytics platform with real-time data visualizati
 - **Render** - Backend hosting
 - **MongoDB Atlas** - Cloud database
 
-## 🚀 Live Demo
+## Live Demo
 
 [**View Live Application**](https://ai-analytics-dashboard.vercel.app)
 
