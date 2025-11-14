@@ -1,776 +1,557 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 
 function App() {
-  const [health, setHealth] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [user, setUser] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [authData, setAuthData] = useState({ name: '', email: '', password: '' });
+  const [health, setHealth] = useState(null)
+  const [users, setUsers] = useState([])
+  const [analytics, setAnalytics] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [realTimeData, setRealTimeData] = useState([])
 
-  // Debug the API URL
-  console.log('🔧 Frontend Debug Info:');
-  console.log('All env vars:', import.meta.env);
-  
-  // Hardcode the API URL for now
-  const API_URL = 'https://ai-analytics-backend-z5so.onrender.com';
-  console.log('Using API_URL:', API_URL);
+  const API_URL = import.meta.env.NEXT_PUBLIC_API_URL || 'https://ai-analytics-backend-z5so.onrender.com'
 
-  // Auth functions
-  const handleLogin = async (e) => {
-    if (e) e.preventDefault();
-    setLoading(true);
-    console.log('🔄 Attempting login with:', authData.email);
-    
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email: authData.email,
-        password: authData.password
-      });
-      
-      console.log('✅ Login response:', response.data);
-      
-      if (response.data.success) {
-        setUser(response.data.user);
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setShowAuth(false);
-        setAuthData({ name: '', email: '', password: '' });
-      }
-    } catch (error) {
-      console.error('❌ Login failed:', error);
-      alert(error.response?.data?.message || 'Login failed');
-    }
-    setLoading(false);
-  };
+  // Mock data for richer demo
+  const features = [
+    { name: 'Real-time Analytics', icon: '📊', description: 'Live data updates every second' },
+    { name: 'User Management', icon: '👥', description: 'Complete user system with roles' },
+    { name: 'AI Predictions', icon: '🤖', description: 'Machine learning insights' },
+    { name: 'Anomaly Detection', icon: '🚨', description: 'Automatic outlier detection' },
+    { name: 'Data Export', icon: '📥', description: 'Export reports in multiple formats' },
+    { name: 'Custom Dashboards', icon: '🎛️', description: 'Build your own analytics views' }
+  ]
 
-  const handleRegister = async (e) => {
-    if (e) e.preventDefault();
-    setLoading(true);
-    console.log('🔄 Attempting registration with:', authData.email);
-    
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, authData);
-      console.log('✅ Registration response:', response.data);
-      
-      if (response.data.success) {
-        alert('Registration successful! Please login.');
-        setAuthMode('login');
-        setAuthData({ ...authData, name: '' });
-      }
-    } catch (error) {
-      console.error('❌ Registration failed:', error);
-      alert(error.response?.data?.message || 'Registration failed');
-    }
-    setLoading(false);
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  };
-
-  // Data functions
   const checkHealth = async () => {
-    setLoading(true);
-    console.log('🔄 Checking health at:', `${API_URL}/api/health`);
-    
+    setLoading(true)
     try {
-      const response = await axios.get(`${API_URL}/api/health`, {
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log('✅ Health check success:', response.data);
-      setHealth(response.data);
+      const response = await axios.get(`${API_URL}/api/health`)
+      setHealth(response.data)
     } catch (error) {
-      console.error('❌ Health check failed:', {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status
-      });
       setHealth({ 
         status: 'ERROR', 
-        message: `Connection failed: ${error.message}`
-      });
+        message: 'Backend is waking up...',
+        tip: 'Render free tier takes 30-50 seconds to start'
+      })
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/users`);
-      setUsers(response.data.users);
+      const response = await axios.get(`${API_URL}/api/users`)
+      setUsers(response.data.users)
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      // Enhanced mock data
       setUsers([
-        { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' }
-      ]);
+        { id: 1, name: 'Alex Johnson', email: 'alex@company.com', role: 'admin', status: 'active', joinDate: '2024-01-15' },
+        { id: 2, name: 'Sarah Chen', email: 'sarah@company.com', role: 'user', status: 'active', joinDate: '2024-02-20' },
+        { id: 3, name: 'Mike Rodriguez', email: 'mike@company.com', role: 'user', status: 'inactive', joinDate: '2024-01-08' },
+        { id: 4, name: 'Emily Davis', email: 'emily@company.com', role: 'admin', status: 'active', joinDate: '2024-03-01' },
+        { id: 5, name: 'James Wilson', email: 'james@company.com', role: 'user', status: 'active', joinDate: '2024-02-10' }
+      ])
     }
-  };
+  }
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/analytics`);
-      setAnalytics(response.data);
+      const response = await axios.get(`${API_URL}/api/analytics`)
+      setAnalytics(response.data)
     } catch (error) {
-      console.error('Failed to fetch analytics:', error);
+      // Enhanced mock analytics
       setAnalytics({
-        revenue: 45231,
-        users: 1234,
-        growth: 12.5,
-        activeUsers: 892,
-        sessions: 2457
-      });
+        revenue: 124531,
+        users: 2347,
+        growth: 18.2,
+        activeUsers: 1892,
+        sessions: 12457,
+        conversion: 28.7,
+        bounceRate: 32.1,
+        avgSession: '4m 22s',
+        chartData: [65, 78, 90, 81, 56, 55, 40, 75, 82, 91, 67, 88]
+      })
     }
-  };
+  }
 
   const testAllFeatures = async () => {
-    setLoading(true);
-    await Promise.all([checkHealth(), fetchUsers(), fetchAnalytics()]);
-    setLoading(false);
-  };
+    setLoading(true)
+    await Promise.all([
+      checkHealth(),
+      fetchUsers(),
+      fetchAnalytics()
+    ])
+    
+    // Simulate real-time data updates
+    const interval = setInterval(() => {
+      setRealTimeData(prev => [
+        ...prev.slice(-9),
+        { value: Math.random() * 100, time: new Date().toLocaleTimeString() }
+      ])
+    }, 2000)
+    
+    setTimeout(() => clearInterval(interval), 10000)
+    setLoading(false)
+  }
 
   useEffect(() => {
-    // Check if user is logged in
-    const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
+    checkHealth()
+    fetchUsers()
+    fetchAnalytics()
     
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-    }
-
-    checkHealth();
-    fetchUsers();
-    fetchAnalytics();
-  }, []);
-
-  // Auth Modal Component
-  const AuthModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '30px',
-        borderRadius: '15px',
-        width: '100%',
-        maxWidth: '400px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-      }}>
-        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
-          {authMode === 'login' ? '🔐 Login' : '👤 Register'}
-        </h2>
-        
-        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
-          {authMode === 'register' && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={authData.name}
-              onChange={(e) => {
-                setAuthData(prev => ({...prev, name: e.target.value}));
-              }}
-              onBlur={(e) => e.target.focus()}
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '15px',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '16px',
-                WebkitAppearance: 'none'
-              }}
-              required
-            />
-          )}
-          
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={authData.email}
-            onChange={(e) => {
-              setAuthData(prev => ({...prev, email: e.target.value}));
-            }}
-            onBlur={(e) => e.target.focus()}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '15px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px',
-              WebkitAppearance: 'none'
-            }}
-            required
-          />
-          
-          <input
-            type="password"
-            placeholder="Password"
-            value={authData.password}
-            onChange={(e) => {
-              setAuthData(prev => ({...prev, password: e.target.value}));
-            }}
-            onBlur={(e) => e.target.focus()}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '20px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px',
-              WebkitAppearance: 'none'
-            }}
-            required
-          />
-          
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? '🔄 Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
-          </button>
-        </form>
-        
-        <p style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
-          {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#3b82f6',
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
-          >
-            {authMode === 'login' ? 'Register' : 'Login'}
-          </button>
-        </p>
-        
-        <button
-          onClick={() => setShowAuth(false)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'none',
-            border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  );
-
-  // ... (rest of the component remains the same as before)
-  // Loading Component, Header, Main Content, etc.
+    // Start with some real-time data
+    setRealTimeData([
+      { value: 45, time: '10:00:00' },
+      { value: 67, time: '10:00:02' },
+      { value: 23, time: '10:00:04' },
+      { value: 89, time: '10:00:06' }
+    ])
+  }, [])
 
   return (
     <div style={{ 
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px'
     }}>
-      {/* Auth Modal */}
-      {showAuth && <AuthModal />}
-
-      <div style={{
-        maxWidth: '1200px',
+      <div style={{ 
+        maxWidth: '1200px', 
         margin: '0 auto',
         background: 'white',
-        minHeight: '100vh',
-        boxShadow: '0 0 20px rgba(0,0,0,0.1)'
+        borderRadius: '20px',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        overflow: 'hidden'
       }}>
+        
         {/* Header */}
         <header style={{
           background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
           color: 'white',
-          padding: '20px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
+          padding: '40px 30px',
+          textAlign: 'center'
         }}>
+          <h1 style={{ 
+            fontSize: '3rem', 
+            marginBottom: '10px',
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #60a5fa, #a78bfa)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            🚀 AI Analytics Dashboard
+          </h1>
+          <p style={{ 
+            fontSize: '1.3rem', 
+            opacity: 0.9,
+            marginBottom: '20px'
+          }}>
+            Enterprise-grade analytics platform with real-time insights
+          </p>
           <div style={{
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '15px'
-          }}>
-            <div>
-              <h1 style={{ 
-                fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-                margin: 0,
-                background: 'linear-gradient(45deg, #60a5fa, #a78bfa)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                🚀 AI Analytics Dashboard
-              </h1>
-              <p style={{ 
-                margin: '5px 0 0 0',
-                opacity: 0.8,
-                fontSize: 'clamp(0.8rem, 2.5vw, 1rem)'
-              }}>
-                Enterprise Analytics Platform
-              </p>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              flexWrap: 'wrap'
-            }}>
-              {user ? (
-                <>
-                  <span style={{ fontSize: '0.9rem' }}>
-                    👋 Hello, {user.name}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      padding: '8px 16px',
-                      background: 'rgba(255,255,255,0.1)',
-                      color: 'white',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setShowAuth(true)}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    backdropFilter: 'blur(10px)',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  🔐 Login
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav style={{
-            display: 'flex',
-            gap: '10px',
-            marginTop: '15px',
+            justifyContent: 'center',
+            gap: '15px',
             flexWrap: 'wrap'
           }}>
-            {['dashboard', 'analytics', 'users'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '8px 16px',
-                  background: activeTab === tab ? '#3b82f6' : 'rgba(255,255,255,0.1)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  textTransform: 'capitalize'
-                }}
-              >
-                {tab === 'dashboard' && '📊 '}
-                {tab === 'analytics' && '📈 '}
-                {tab === 'users' && '👥 '}
-                {tab}
-              </button>
-            ))}
-          </nav>
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              style={{
+                padding: '12px 24px',
+                background: activeTab === 'dashboard' ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              📊 Dashboard
+            </button>
+            <button 
+              onClick={() => setActiveTab('users')}
+              style={{
+                padding: '12px 24px',
+                background: activeTab === 'users' ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              👥 Users
+            </button>
+            <button 
+              onClick={() => setActiveTab('analytics')}
+              style={{
+                padding: '12px 24px',
+                background: activeTab === 'analytics' ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              📈 Analytics
+            </button>
+          </div>
         </header>
 
         {/* Main Content */}
-        <main style={{ padding: '20px' }}>
-          {/* Loading Spinner */}
-          {loading && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '40px'
-            }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                border: '4px solid #f3f3f3',
-                borderTop: '4px solid #3b82f6',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }}></div>
+        <div style={{ padding: '30px' }}>
+          
+          {/* Server Status Card */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+            padding: '25px',
+            borderRadius: '15px',
+            marginBottom: '30px',
+            border: '1px solid #bae6fd'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h2 style={{ color: '#0369a1', fontSize: '1.5rem' }}>System Status</h2>
+              <button 
+                onClick={checkHealth}
+                disabled={loading}
+                style={{
+                  padding: '10px 20px',
+                  background: '#0284c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1
+                }}
+              >
+                {loading ? '🔄 Checking...' : '🔍 Check Status'}
+              </button>
             </div>
-          )}
+            
+            {health ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  background: health.status === 'OK' ? '#10b981' : '#f59e0b',
+                  animation: health.status === 'OK' ? 'pulse 2s infinite' : 'none'
+                }}></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ marginBottom: '5px', fontSize: '1.1rem', fontWeight: '600' }}>
+                    Status: <span style={{ 
+                      color: health.status === 'OK' ? '#10b981' : '#f59e0b'
+                    }}>
+                      {health.status === 'OK' ? 'All Systems Operational' : 'System Starting...'}
+                    </span>
+                  </p>
+                  <p style={{ color: '#64748b', fontSize: '1rem' }}>
+                    {health.message}
+                  </p>
+                  {health.tip && (
+                    <p style={{ 
+                      color: '#d97706', 
+                      fontSize: '0.9rem', 
+                      marginTop: '8px',
+                      background: '#fffbeb',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #fcd34d'
+                    }}>
+                      💡 {health.tip}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p>Checking system status...</p>
+            )}
+          </div>
 
           {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && !loading && (
+          {activeTab === 'dashboard' && (
             <div>
-              {/* Welcome Message */}
-              {user && (
-                <div style={{
-                  background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                  padding: '20px',
-                  borderRadius: '12px',
-                  marginBottom: '20px',
-                  border: '1px solid #bae6fd'
-                }}>
-                  <h2 style={{ color: '#0369a1', margin: 0 }}>
-                    👋 Welcome back, {user.name}!
-                  </h2>
-                  <p style={{ color: '#64748b', margin: '5px 0 0 0' }}>
-                    Ready to explore your analytics dashboard
-                  </p>
-                </div>
-              )}
-
-              {/* Server Status */}
-              <div style={{
-                background: 'white',
-                padding: '20px',
-                borderRadius: '12px',
-                marginBottom: '20px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '15px',
-                  flexWrap: 'wrap',
-                  gap: '10px'
-                }}>
-                  <h2 style={{ color: '#1e293b', margin: 0 }}>System Status</h2>
-                  <button
-                    onClick={checkHealth}
-                    disabled={loading}
-                    style={{
-                      padding: '8px 16px',
-                      background: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.6 : 1,
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    🔄 Refresh
-                  </button>
-                </div>
-
-                {health ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: health.status === 'OK' ? '#10b981' : '#ef4444',
-                      animation: health.status === 'OK' ? 'pulse 2s infinite' : 'none'
-                    }}></div>
-                    <div style={{ flex: 1, minWidth: '200px' }}>
-                      <p style={{ margin: '0 0 4px 0', fontWeight: '600' }}>
-                        Status: <span style={{
-                          color: health.status === 'OK' ? '#10b981' : '#ef4444'
-                        }}>
-                          {health.status}
-                        </span>
-                      </p>
-                      <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
-                        {health.message}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>Checking system status...</p>
-                )}
-              </div>
-
               {/* Analytics Overview */}
-              {analytics && (
-                <div style={{
-                  background: 'white',
-                  padding: '20px',
-                  borderRadius: '12px',
-                  marginBottom: '20px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                }}>
-                  <h2 style={{ color: '#1e293b', marginBottom: '20px' }}>📊 Business Overview</h2>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                    gap: '15px'
+              <div style={{ marginBottom: '30px' }}>
+                <h2 style={{ color: '#1e293b', fontSize: '1.8rem', marginBottom: '20px' }}>📈 Business Overview</h2>
+                {analytics && (
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                    gap: '20px',
+                    marginBottom: '30px'
                   }}>
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '15px',
-                      background: '#f0f9ff',
-                      borderRadius: '8px',
-                      border: '1px solid #e0f2fe'
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '25px', 
+                      background: 'linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%)',
+                      borderRadius: '12px',
+                      border: '1px solid #bfdbfe'
                     }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0369a1' }}>
-                        ${analytics.revenue?.toLocaleString()}
-                      </div>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Revenue</div>
+                      <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e40af' }}>${analytics.revenue?.toLocaleString()}</div>
+                      <div style={{ color: '#374151', fontWeight: '600', fontSize: '1.1rem' }}>Total Revenue</div>
+                      <div style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '5px' }}>↑ 18.2% from last month</div>
                     </div>
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '15px',
-                      background: '#f0fdf4',
-                      borderRadius: '8px',
-                      border: '1px solid #dcfce7'
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '25px', 
+                      background: 'linear-gradient(135deg, #dcfce7 0%, #86efac 100%)',
+                      borderRadius: '12px',
+                      border: '1px solid #bbf7d0'
                     }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#15803d' }}>
-                        {analytics.users?.toLocaleString()}
-                      </div>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Users</div>
+                      <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#166534' }}>{analytics.users?.toLocaleString()}</div>
+                      <div style={{ color: '#374151', fontWeight: '600', fontSize: '1.1rem' }}>Total Users</div>
+                      <div style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '5px' }}>↑ 234 new this week</div>
                     </div>
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '15px',
-                      background: '#fffbeb',
-                      borderRadius: '8px',
-                      border: '1px solid #fef3c7'
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '25px', 
+                      background: 'linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%)',
+                      borderRadius: '12px',
+                      border: '1px solid #fde68a'
                     }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#d97706' }}>
-                        +{analytics.growth}%
-                      </div>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Growth</div>
+                      <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#92400e' }}>+{analytics.growth}%</div>
+                      <div style={{ color: '#374151', fontWeight: '600', fontSize: '1.1rem' }}>Growth Rate</div>
+                      <div style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '5px' }}>↑ 5.7% from last quarter</div>
+                    </div>
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '25px', 
+                      background: 'linear-gradient(135deg, #fce7f3 0%, #f9a8d4 100%)',
+                      borderRadius: '12px',
+                      border: '1px solid #fbcfe8'
+                    }}>
+                      <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#be185d' }}>{analytics.conversion}%</div>
+                      <div style={{ color: '#374151', fontWeight: '600', fontSize: '1.1rem' }}>Conversion Rate</div>
+                      <div style={{ color: '#10b981', fontSize: '0.9rem', marginTop: '5px' }}>↑ 2.3% optimization</div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Quick Actions */}
-              <div style={{
-                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                color: 'white',
-                padding: '25px',
-                borderRadius: '12px',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ marginBottom: '15px' }}>Ready to Explore? 🚀</h3>
-                <p style={{ marginBottom: '20px', opacity: 0.9 }}>
-                  Test all features of your analytics dashboard
-                </p>
-                <button
-                  onClick={testAllFeatures}
-                  disabled={loading}
-                  style={{
-                    padding: '12px 30px',
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderRadius: '8px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    backdropFilter: 'blur(10px)',
-                    opacity: loading ? 0.7 : 1,
-                    fontSize: '1rem'
-                  }}
-                >
-                  {loading ? '🔄 Testing...' : '🎯 Test All Features'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Analytics Tab */}
-          {activeTab === 'analytics' && !loading && (
-            <div>
-              <h2 style={{ color: '#1e293b', marginBottom: '20px' }}>📈 Detailed Analytics</h2>
-              {analytics ? (
-                <div style={{
-                  display: 'grid',
-                  gap: '15px',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'
+                {/* Real-time Data Stream */}
+                <div style={{ 
+                  background: '#f8fafc',
+                  padding: '25px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
                 }}>
-                  {Object.entries(analytics).map(([key, value]) => (
-                    <div key={key} style={{
-                      background: 'white',
-                      padding: '15px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0'
+                  <h3 style={{ color: '#1e293b', marginBottom: '15px' }}>🔄 Real-time Data Stream</h3>
+                  <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '10px'
+                  }}>
+                    {realTimeData.map((data, index) => (
+                      <div key={index} style={{
+                        background: 'white',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        <div style={{ 
+                          fontSize: '1.5rem', 
+                          fontWeight: 'bold',
+                          color: '#3b82f6'
+                        }}>
+                          {data.value.toFixed(1)}
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.8rem',
+                          color: '#64748b'
+                        }}>
+                          {data.time}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Features Grid */}
+              <div>
+                <h2 style={{ color: '#1e293b', fontSize: '1.8rem', marginBottom: '20px' }}>✨ Platform Features</h2>
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {features.map((feature, index) => (
+                    <div key={index} style={{
+                      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                      padding: '25px',
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      transition: 'transform 0.2s ease'
                     }}>
-                      <div style={{
-                        fontSize: '0.9rem',
+                      <div style={{ 
+                        fontSize: '2rem',
+                        marginBottom: '15px'
+                      }}>
+                        {feature.icon}
+                      </div>
+                      <h3 style={{ 
+                        color: '#1e293b',
+                        fontSize: '1.3rem',
+                        marginBottom: '10px'
+                      }}>
+                        {feature.name}
+                      </h3>
+                      <p style={{ 
                         color: '#64748b',
-                        textTransform: 'capitalize',
-                        marginBottom: '5px'
+                        lineHeight: '1.5'
                       }}>
-                        {key.replace(/([A-Z])/g, ' $1')}
-                      </div>
-                      <div style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold',
-                        color: '#1e293b'
-                      }}>
-                        {typeof value === 'number' ? value.toLocaleString() : value}
-                      </div>
+                        {feature.description}
+                      </p>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p>Loading analytics data...</p>
-              )}
+              </div>
             </div>
           )}
 
           {/* Users Tab */}
-          {activeTab === 'users' && !loading && (
+          {activeTab === 'users' && (
             <div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                flexWrap: 'wrap',
-                gap: '10px'
+              <h2 style={{ color: '#1e293b', fontSize: '1.8rem', marginBottom: '20px' }}>👥 User Management</h2>
+              <div style={{ 
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                overflow: 'hidden'
               }}>
-                <h2 style={{ color: '#1e293b', margin: 0 }}>👥 User Management</h2>
-                <button
-                  onClick={fetchUsers}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  🔄 Refresh Users
-                </button>
-              </div>
-
-              {users.length > 0 ? (
                 <div style={{
-                  display: 'grid',
-                  gap: '10px'
+                  background: '#f8fafc',
+                  padding: '20px',
+                  borderBottom: '1px solid #e2e8f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Total Users: </span>
+                    <strong style={{ color: '#1e293b' }}>{users.length}</strong>
+                  </div>
+                  <button 
+                    onClick={fetchUsers}
+                    style={{
+                      padding: '10px 20px',
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔄 Refresh Users
+                  </button>
+                </div>
+                
+                <div style={{ padding: '20px' }}>
                   {users.map(user => (
                     <div key={user.id} style={{
-                      background: 'white',
-                      padding: '15px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
                       display: 'flex',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '10px'
+                      padding: '20px',
+                      borderBottom: '1px solid #f1f5f9',
+                      gap: '15px'
                     }}>
-                      <div style={{ flex: 1, minWidth: '200px' }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
+                      <div style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '1.2rem'
+                      }}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
                           gap: '10px',
                           marginBottom: '5px'
                         }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '50%',
-                            background: '#3b82f6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontWeight: 'bold',
+                          <strong style={{ color: '#1e293b', fontSize: '1.1rem' }}>{user.name}</strong>
+                          <span style={{
+                            padding: '4px 12px',
+                            background: user.role === 'admin' ? '#fef3c7' : '#f1f5f9',
+                            color: user.role === 'admin' ? '#d97706' : '#64748b',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600'
+                          }}>
+                            {user.role}
+                          </span>
+                          <span style={{
+                            padding: '4px 12px',
+                            background: user.status === 'active' ? '#dcfce7' : '#fef2f2',
+                            color: user.status === 'active' ? '#166534' : '#dc2626',
+                            borderRadius: '20px',
                             fontSize: '0.8rem'
                           }}>
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <strong style={{ color: '#1e293b' }}>{user.name}</strong>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem' }}>
-                              {user.email}
-                            </div>
-                          </div>
+                            {user.status}
+                          </span>
+                        </div>
+                        <div style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                          {user.email} • Joined {user.joinDate}
                         </div>
                       </div>
-                      <span style={{
-                        padding: '4px 12px',
-                        background: user.role === 'admin' ? '#fef3c7' : '#f1f5f9',
-                        color: user.role === 'admin' ? '#d97706' : '#64748b',
-                        borderRadius: '20px',
-                        fontSize: '0.7rem',
-                        fontWeight: '600'
-                      }}>
-                        {user.role}
-                      </span>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p style={{ textAlign: 'center', color: '#64748b', padding: '40px' }}>
-                  No users found
-                </p>
-              )}
+              </div>
             </div>
           )}
-        </main>
+
+          {/* Action Section */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+            color: 'white',
+            padding: '40px',
+            borderRadius: '15px',
+            textAlign: 'center',
+            marginTop: '40px'
+          }}>
+            <h3 style={{ fontSize: '2rem', marginBottom: '15px' }}>Ready to Get Started? 🚀</h3>
+            <p style={{ fontSize: '1.2rem', opacity: 0.9, marginBottom: '30px' }}>
+              Explore all features of your AI Analytics Dashboard
+            </p>
+            <button 
+              onClick={testAllFeatures}
+              disabled={loading}
+              style={{
+                padding: '15px 40px',
+                background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50px',
+                fontSize: '1.1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1
+              }}
+            >
+              {loading ? '🔄 Testing Features...' : '🎯 Test All Features'}
+            </button>
+          </div>
+        </div>
 
         {/* Footer */}
         <footer style={{
           background: '#f8fafc',
-          padding: '20px',
+          padding: '30px',
           textAlign: 'center',
           borderTop: '1px solid #e2e8f0',
-          color: '#64748b',
-          marginTop: '40px'
+          color: '#64748b'
         }}>
-          <p style={{ margin: '0 0 5px 0' }}>
+          <p style={{ fontSize: '1.1rem', marginBottom: '10px' }}>
             🚀 AI Analytics Dashboard v2.0
           </p>
-          <p style={{ margin: 0, fontSize: '0.8rem' }}>
+          <p style={{ fontSize: '0.9rem' }}>
             Built with React • Node.js • MongoDB • Real-time Analytics
           </p>
         </footer>
@@ -778,10 +559,6 @@ function App() {
 
       <style>
         {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
           @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -790,7 +567,7 @@ function App() {
         `}
       </style>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
