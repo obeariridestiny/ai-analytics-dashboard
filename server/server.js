@@ -17,16 +17,19 @@ const httpServer = createServer(app);
 app.use(helmet());
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
+// Middleware
+app.use(helmet());
 
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "https://ai-analytics-dashboard.vercel.app",
-      "https://ai-analytics-dashboard-iota.vercel.app", // Your exact frontend
-      "https://ai-analytics-backend-z5so.onrender.com"
-    ];
+// SIMPLE CORS - Allow everything temporarily
+app.use(cors({
+  origin: "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "*"]
+}));
+
+// Explicitly handle preflight requests
+app.options('*', cors());
 
     // Allow any Vercel preview deployments
     if (origin.includes('vercel.app') || origin.includes('onrender.com')) {
