@@ -154,53 +154,69 @@ function App() {
   }, []);
 
   // Auth Modal Component
-  const AuthModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '30px',
-        borderRadius: '15px',
-        width: '100%',
-        maxWidth: '400px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-      }}>
-        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
-          {authMode === 'login' ? '🔐 Login' : '👤 Register'}
-        </h2>
-        
-        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
-          {authMode === 'register' && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={authData.name}
-              onChange={(e) => {
-                setAuthData(prev => ({...prev, name: e.target.value}));
-              }}
-              onBlur={(e) => e.target.focus()}
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '15px',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '16px',
-                WebkitAppearance: 'none'
-              }}
-              required
-            />
+  // In the AuthModal component, replace the input fields with:
+
+{authMode === 'register' && (
+  <input
+    type="text"
+    placeholder="Full Name"
+    value={authData.name}
+    onChange={(e) => {
+      setAuthData(prev => ({...prev, name: e.target.value}));
+    }}
+    onBlur={(e) => e.target.focus()} // Prevents keyboard dismiss
+    style={{
+      width: '100%',
+      padding: '12px',
+      marginBottom: '15px',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      fontSize: '16px',
+      WebkitAppearance: 'none' // Fix for iOS
+    }}
+    required
+  />
+)}
+
+<input
+  type="email"
+  placeholder="Email Address"
+  value={authData.email}
+  onChange={(e) => {
+    setAuthData(prev => ({...prev, email: e.target.value}));
+  }}
+  onBlur={(e) => e.target.focus()} // Prevents keyboard dismiss
+  style={{
+    width: '100%',
+    padding: '12px',
+    marginBottom: '15px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '16px',
+    WebkitAppearance: 'none'
+  }}
+  required
+/>
+
+<input
+  type="password"
+  placeholder="Password"
+  value={authData.password}
+  onChange={(e) => {
+    setAuthData(prev => ({...prev, password: e.target.value}));
+  }}
+  onBlur={(e) => e.target.focus()} // Prevents keyboard dismiss
+  style={{
+    width: '100%',
+    padding: '12px',
+    marginBottom: '20px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '16px',
+    WebkitAppearance: 'none'
+  }}
+  required
+/>
           )}
           
           <input
