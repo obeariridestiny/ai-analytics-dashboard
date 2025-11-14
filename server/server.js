@@ -16,16 +16,35 @@ const httpServer = createServer(app);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://ai-analytics-dashboard.vercel.app",
-    "https://ai-analytics-dashboard-*.vercel.app",
-    "https://*.vercel.app"
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://ai-analytics-dashboard.vercel.app",
+      "https://ai-analytics-dashboard-iota.vercel.app", // Your exact frontend
+      "https://ai-analytics-backend-z5so.onrender.com"
+    ];
+
+    // Allow any Vercel preview deployments
+    if (origin.includes('vercel.app') || origin.includes('onrender.com')) {
+      console.log('✅ Allowed origin:', origin);
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('🔒 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
-app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
