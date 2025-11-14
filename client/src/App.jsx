@@ -12,39 +12,35 @@ function App() {
   const [authMode, setAuthMode] = useState('login');
   const [authData, setAuthData] = useState({ name: '', email: '', password: '' });
 
-  // Backend URL - make sure this matches your Render backend
+  // Debug the API URL
+  console.log('🔧 Frontend Debug Info:');
+  console.log('All env vars:', import.meta.env);
+  
+  // Hardcode the API URL for now
   const API_URL = 'https://ai-analytics-backend-z5so.onrender.com';
-  console.log('🔧 Using API_URL:', API_URL);
-
-  // Create axios instance with better configuration
-  const api = axios.create({
-    baseURL: API_URL,
-    timeout: 15000,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  console.log('Using API_URL:', API_URL);
 
   // Auth functions
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    console.log('🔄 Attempting login...');
+    console.log('🔄 Attempting login with:', authData.email);
     
     try {
-      const response = await api.post('/api/auth/login', {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: authData.email,
         password: authData.password
       });
       
       console.log('✅ Login response:', response.data);
       
-      setUser(response.data.user);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      setShowAuth(false);
-      setAuthData({ name: '', email: '', password: '' });
-      
+      if (response.data.success) {
+        setUser(response.data.user);
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setShowAuth(false);
+        setAuthData({ name: '', email: '', password: '' });
+      }
     } catch (error) {
       console.error('❌ Login failed:', error);
       alert(error.response?.data?.message || 'Login failed');
@@ -55,16 +51,17 @@ function App() {
   const handleRegister = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    console.log('🔄 Attempting registration...');
+    console.log('🔄 Attempting registration with:', authData.email);
     
     try {
-      const response = await api.post('/api/auth/register', authData);
+      const response = await axios.post(`${API_URL}/api/auth/register`, authData);
       console.log('✅ Registration response:', response.data);
       
-      alert('Registration successful! Please login.');
-      setAuthMode('login');
-      setAuthData({ ...authData, name: '' });
-      
+      if (response.data.success) {
+        alert('Registration successful! Please login.');
+        setAuthMode('login');
+        setAuthData({ ...authData, name: '' });
+      }
     } catch (error) {
       console.error('❌ Registration failed:', error);
       alert(error.response?.data?.message || 'Registration failed');
@@ -81,10 +78,15 @@ function App() {
   // Data functions
   const checkHealth = async () => {
     setLoading(true);
-    console.log('🔄 Checking health...');
+    console.log('🔄 Checking health at:', `${API_URL}/api/health`);
     
     try {
-      const response = await api.get('/api/health');
+      const response = await axios.get(`${API_URL}/api/health`, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('✅ Health check success:', response.data);
       setHealth(response.data);
     } catch (error) {
@@ -104,11 +106,10 @@ function App() {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/api/users');
+      const response = await axios.get(`${API_URL}/api/users`);
       setUsers(response.data.users);
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      // Fallback mock data
       setUsers([
         { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' }
@@ -118,11 +119,10 @@ function App() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await api.get('/api/analytics');
+      const response = await axios.get(`${API_URL}/api/analytics`);
       setAnalytics(response.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
-      // Fallback mock data
       setAnalytics({
         revenue: 45231,
         users: 1234,
@@ -148,138 +148,157 @@ function App() {
       setUser(JSON.parse(savedUser));
     }
 
-    // Load initial data
     checkHealth();
     fetchUsers();
     fetchAnalytics();
   }, []);
 
-  // Auth Modal Component - FIXED VERSION (no onBlur handlers)
-  const AuthModal = () => {
-    const inputStyle = {
-      width: '100%',
-      padding: '12px',
-      marginBottom: '15px',
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      fontSize: '16px',
-      WebkitAppearance: 'none',
-      lineHeight: '1.5'
-    };
-
-    return (
+  // Auth Modal Component
+  const AuthModal = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '20px'
+    }}>
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px'
+        background: 'white',
+        padding: '30px',
+        borderRadius: '15px',
+        width: '100%',
+        maxWidth: '400px',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
       }}>
-        <div style={{
-          background: 'white',
-          padding: '30px',
-          borderRadius: '15px',
-          width: '100%',
-          maxWidth: '400px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
-            {authMode === 'login' ? '🔐 Login' : '👤 Register'}
-          </h2>
-          
-          <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
-            {authMode === 'register' && (
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={authData.name}
-                onChange={(e) => setAuthData(prev => ({...prev, name: e.target.value}))}
-                style={inputStyle}
-                autoComplete="name"
-                required
-              />
-            )}
-            
+        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
+          {authMode === 'login' ? '🔐 Login' : '👤 Register'}
+        </h2>
+        
+        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
+          {authMode === 'register' && (
             <input
-              type="email"
-              placeholder="Email Address"
-              value={authData.email}
-              onChange={(e) => setAuthData(prev => ({...prev, email: e.target.value}))}
-              style={inputStyle}
-              autoComplete="email"
-              required
-            />
-            
-            <input
-              type="password"
-              placeholder="Password"
-              value={authData.password}
-              onChange={(e) => setAuthData(prev => ({...prev, password: e.target.value}))}
-              style={inputStyle}
-              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
-              required
-            />
-            
-            <button
-              type="submit"
-              disabled={loading}
+              type="text"
+              placeholder="Full Name"
+              value={authData.name}
+              onChange={(e) => {
+                setAuthData(prev => ({...prev, name: e.target.value}));
+              }}
+              onBlur={(e) => e.target.focus()}
               style={{
                 width: '100%',
                 padding: '12px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
+                marginBottom: '15px',
+                border: '1px solid #ddd',
                 borderRadius: '8px',
                 fontSize: '16px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
+                WebkitAppearance: 'none'
               }}
-            >
-              {loading ? '🔄 Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
-            </button>
-          </form>
+              required
+            />
+          )}
           
-          <p style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
-            {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#3b82f6',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              {authMode === 'login' ? 'Register' : 'Login'}
-            </button>
-          </p>
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={authData.email}
+            onChange={(e) => {
+              setAuthData(prev => ({...prev, email: e.target.value}));
+            }}
+            onBlur={(e) => e.target.focus()}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '15px',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              fontSize: '16px',
+              WebkitAppearance: 'none'
+            }}
+            required
+          />
+          
+          <input
+            type="password"
+            placeholder="Password"
+            value={authData.password}
+            onChange={(e) => {
+              setAuthData(prev => ({...prev, password: e.target.value}));
+            }}
+            onBlur={(e) => e.target.focus()}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '20px',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              fontSize: '16px',
+              WebkitAppearance: 'none'
+            }}
+            required
+          />
           
           <button
-            onClick={() => setShowAuth(false)}
+            type="submit"
+            disabled={loading}
             style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              background: 'none',
+              width: '100%',
+              padding: '12px',
+              background: '#3b82f6',
+              color: 'white',
               border: 'none',
-              fontSize: '20px',
-              cursor: 'pointer',
-              color: '#666'
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1
             }}
           >
-            ✕
+            {loading ? '🔄 Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
           </button>
-        </div>
+        </form>
+        
+        <p style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
+          {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+          <button
+            onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#3b82f6',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {authMode === 'login' ? 'Register' : 'Login'}
+          </button>
+        </p>
+        
+        <button
+          onClick={() => setShowAuth(false)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'none',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+            color: '#666'
+          }}
+        >
+          ✕
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
+
+  // ... (rest of the component remains the same as before)
+  // Loading Component, Header, Main Content, etc.
 
   return (
     <div style={{ 
@@ -327,7 +346,7 @@ function App() {
                 opacity: 0.8,
                 fontSize: 'clamp(0.8rem, 2.5vw, 1rem)'
               }}>
-                Connected to Backend v1.0.0
+                Enterprise Analytics Platform
               </p>
             </div>
 
@@ -506,11 +525,6 @@ function App() {
                       <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
                         {health.message}
                       </p>
-                      {health.version && (
-                        <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '0.8rem' }}>
-                          Backend Version: {health.version}
-                        </p>
-                      )}
                     </div>
                   </div>
                 ) : (
@@ -757,7 +771,7 @@ function App() {
             🚀 AI Analytics Dashboard v2.0
           </p>
           <p style={{ margin: 0, fontSize: '0.8rem' }}>
-            Connected to Backend API • Real-time Analytics
+            Built with React • Node.js • MongoDB • Real-time Analytics
           </p>
         </footer>
       </div>
