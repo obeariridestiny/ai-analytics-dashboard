@@ -12,35 +12,39 @@ function App() {
   const [authMode, setAuthMode] = useState('login');
   const [authData, setAuthData] = useState({ name: '', email: '', password: '' });
 
-  // Debug the API URL
-  console.log('🔧 Frontend Debug Info:');
-  console.log('All env vars:', import.meta.env);
-  
-  // Hardcode the API URL for now
+  // Backend URL - make sure this matches your Render backend
   const API_URL = 'https://ai-analytics-backend-z5so.onrender.com';
-  console.log('Using API_URL:', API_URL);
+  console.log('🔧 Using API_URL:', API_URL);
+
+  // Create axios instance with better configuration
+  const api = axios.create({
+    baseURL: API_URL,
+    timeout: 15000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
   // Auth functions
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    console.log('🔄 Attempting login with:', authData.email);
+    console.log('🔄 Attempting login...');
     
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
+      const response = await api.post('/api/auth/login', {
         email: authData.email,
         password: authData.password
       });
       
       console.log('✅ Login response:', response.data);
       
-      if (response.data.success) {
-        setUser(response.data.user);
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setShowAuth(false);
-        setAuthData({ name: '', email: '', password: '' });
-      }
+      setUser(response.data.user);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      setShowAuth(false);
+      setAuthData({ name: '', email: '', password: '' });
+      
     } catch (error) {
       console.error('❌ Login failed:', error);
       alert(error.response?.data?.message || 'Login failed');
@@ -51,17 +55,16 @@ function App() {
   const handleRegister = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    console.log('🔄 Attempting registration with:', authData.email);
+    console.log('🔄 Attempting registration...');
     
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, authData);
+      const response = await api.post('/api/auth/register', authData);
       console.log('✅ Registration response:', response.data);
       
-      if (response.data.success) {
-        alert('Registration successful! Please login.');
-        setAuthMode('login');
-        setAuthData({ ...authData, name: '' });
-      }
+      alert('Registration successful! Please login.');
+      setAuthMode('login');
+      setAuthData({ ...authData, name: '' });
+      
     } catch (error) {
       console.error('❌ Registration failed:', error);
       alert(error.response?.data?.message || 'Registration failed');
@@ -78,15 +81,10 @@ function App() {
   // Data functions
   const checkHealth = async () => {
     setLoading(true);
-    console.log('🔄 Checking health at:', `${API_URL}/api/health`);
+    console.log('🔄 Checking health...');
     
     try {
-      const response = await axios.get(`${API_URL}/api/health`, {
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.get('/api/health');
       console.log('✅ Health check success:', response.data);
       setHealth(response.data);
     } catch (error) {
@@ -106,10 +104,11 @@ function App() {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/users`);
+      const response = await api.get('/api/users');
       setUsers(response.data.users);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      // Fallback mock data
       setUsers([
         { id: 1, name: 'John Doe', email: 'john@example.com', role: 'admin' },
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user' }
@@ -119,10 +118,11 @@ function App() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/analytics`);
+      const response = await api.get('/api/analytics');
       setAnalytics(response.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
+      // Fallback mock data
       setAnalytics({
         revenue: 45231,
         users: 1234,
@@ -148,6 +148,7 @@ function App() {
       setUser(JSON.parse(savedUser));
     }
 
+    // Load initial data
     checkHealth();
     fetchUsers();
     fetchAnalytics();
@@ -186,18 +187,14 @@ function App() {
               type="text"
               placeholder="Full Name"
               value={authData.name}
-              onChange={(e) => {
-                setAuthData(prev => ({...prev, name: e.target.value}));
-              }}
-              onBlur={(e) => e.target.focus()}
+              onChange={(e) => setAuthData(prev => ({...prev, name: e.target.value}))}
               style={{
                 width: '100%',
                 padding: '12px',
                 marginBottom: '15px',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
-                fontSize: '16px',
-                WebkitAppearance: 'none'
+                fontSize: '16px'
               }}
               required
             />
@@ -207,18 +204,14 @@ function App() {
             type="email"
             placeholder="Email Address"
             value={authData.email}
-            onChange={(e) => {
-              setAuthData(prev => ({...prev, email: e.target.value}));
-            }}
-            onBlur={(e) => e.target.focus()}
+            onChange={(e) => setAuthData(prev => ({...prev, email: e.target.value}))}
             style={{
               width: '100%',
               padding: '12px',
               marginBottom: '15px',
               border: '1px solid #ddd',
               borderRadius: '8px',
-              fontSize: '16px',
-              WebkitAppearance: 'none'
+              fontSize: '16px'
             }}
             required
           />
@@ -227,18 +220,14 @@ function App() {
             type="password"
             placeholder="Password"
             value={authData.password}
-            onChange={(e) => {
-              setAuthData(prev => ({...prev, password: e.target.value}));
-            }}
-            onBlur={(e) => e.target.focus()}
+            onChange={(e) => setAuthData(prev => ({...prev, password: e.target.value}))}
             style={{
               width: '100%',
               padding: '12px',
               marginBottom: '20px',
               border: '1px solid #ddd',
               borderRadius: '8px',
-              fontSize: '16px',
-              WebkitAppearance: 'none'
+              fontSize: '16px'
             }}
             required
           />
@@ -297,9 +286,6 @@ function App() {
     </div>
   );
 
-  // ... (rest of the component remains the same as before)
-  // Loading Component, Header, Main Content, etc.
-
   return (
     <div style={{ 
       minHeight: '100vh',
@@ -346,7 +332,7 @@ function App() {
                 opacity: 0.8,
                 fontSize: 'clamp(0.8rem, 2.5vw, 1rem)'
               }}>
-                Enterprise Analytics Platform
+                Connected to Backend v1.0.0
               </p>
             </div>
 
@@ -525,6 +511,11 @@ function App() {
                       <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
                         {health.message}
                       </p>
+                      {health.version && (
+                        <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '0.8rem' }}>
+                          Backend Version: {health.version}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -771,7 +762,7 @@ function App() {
             🚀 AI Analytics Dashboard v2.0
           </p>
           <p style={{ margin: 0, fontSize: '0.8rem' }}>
-            Built with React • Node.js • MongoDB • Real-time Analytics
+            Connected to Backend API • Real-time Analytics
           </p>
         </footer>
       </div>
