@@ -33,7 +33,7 @@ A production-ready full-stack analytics platform with real-time data visualizati
 
 ## Live Demo
 
-[**View Live Application**](https://ai-analytics-dashboard.vercel.app)
+[**View Live Application**](https://ai-analytics-dashboard-iota.vercel.app/)
 
 **Backend API:** [https://ai-analytics-backend-z5so.onrender.com](https://ai-analytics-backend-z5so.onrender.com)
 
