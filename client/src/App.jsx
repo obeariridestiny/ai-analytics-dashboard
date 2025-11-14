@@ -154,137 +154,132 @@ function App() {
     fetchAnalytics();
   }, []);
 
-  // Auth Modal Component
-  const AuthModal = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
-    }}>
+  // Auth Modal Component - FIXED VERSION (no onBlur handlers)
+  const AuthModal = () => {
+    const inputStyle = {
+      width: '100%',
+      padding: '12px',
+      marginBottom: '15px',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      fontSize: '16px',
+      WebkitAppearance: 'none',
+      lineHeight: '1.5'
+    };
+
+    return (
       <div style={{
-        background: 'white',
-        padding: '30px',
-        borderRadius: '15px',
-        width: '100%',
-        maxWidth: '400px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '20px'
       }}>
-        <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
-          {authMode === 'login' ? '🔐 Login' : '👤 Register'}
-        </h2>
-        
-        <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
-          {authMode === 'register' && (
+        <div style={{
+          background: 'white',
+          padding: '30px',
+          borderRadius: '15px',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
+            {authMode === 'login' ? '🔐 Login' : '👤 Register'}
+          </h2>
+          
+          <form onSubmit={authMode === 'login' ? handleLogin : handleRegister}>
+            {authMode === 'register' && (
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={authData.name}
+                onChange={(e) => setAuthData(prev => ({...prev, name: e.target.value}))}
+                style={inputStyle}
+                autoComplete="name"
+                required
+              />
+            )}
+            
             <input
-              type="text"
-              placeholder="Full Name"
-              value={authData.name}
-              onChange={(e) => setAuthData(prev => ({...prev, name: e.target.value}))}
+              type="email"
+              placeholder="Email Address"
+              value={authData.email}
+              onChange={(e) => setAuthData(prev => ({...prev, email: e.target.value}))}
+              style={inputStyle}
+              autoComplete="email"
+              required
+            />
+            
+            <input
+              type="password"
+              placeholder="Password"
+              value={authData.password}
+              onChange={(e) => setAuthData(prev => ({...prev, password: e.target.value}))}
+              style={inputStyle}
+              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+              required
+            />
+            
+            <button
+              type="submit"
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
-                marginBottom: '15px',
-                border: '1px solid #ddd',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
                 borderRadius: '8px',
-                fontSize: '16px'
+                fontSize: '16px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1
               }}
-              required
-            />
-          )}
+            >
+              {loading ? '🔄 Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
+            </button>
+          </form>
           
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={authData.email}
-            onChange={(e) => setAuthData(prev => ({...prev, email: e.target.value}))}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '15px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-            required
-          />
-          
-          <input
-            type="password"
-            placeholder="Password"
-            value={authData.password}
-            onChange={(e) => setAuthData(prev => ({...prev, password: e.target.value}))}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '20px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-            required
-          />
+          <p style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
+            {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+            <button
+              onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#3b82f6',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {authMode === 'login' ? 'Register' : 'Login'}
+            </button>
+          </p>
           
           <button
-            type="submit"
-            disabled={loading}
+            onClick={() => setShowAuth(false)}
             style={{
-              width: '100%',
-              padding: '12px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? '🔄 Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
-          </button>
-        </form>
-        
-        <p style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
-          {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
               background: 'none',
               border: 'none',
-              color: '#3b82f6',
+              fontSize: '20px',
               cursor: 'pointer',
-              textDecoration: 'underline'
+              color: '#666'
             }}
           >
-            {authMode === 'login' ? 'Register' : 'Login'}
+            ✕
           </button>
-        </p>
-        
-        <button
-          onClick={() => setShowAuth(false)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'none',
-            border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          ✕
-        </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ 
